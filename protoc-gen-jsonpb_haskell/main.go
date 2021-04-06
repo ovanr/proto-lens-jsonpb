@@ -74,7 +74,7 @@ func (g *generator) generateHaskellCode(file *descriptor.FileDescriptorProto) st
 	print(b, "")
 
   for _, dep := range file.Dependency {
-      print(b, "import           Proto.%s_JSON ()", packageType(dep))
+      print(b, "import           Proto.%s_JSON ()", packageFileName(dep))
   }
 
 	print(b, "import           Proto.%s as P", moduleName)
@@ -450,7 +450,7 @@ func camelCase(s string) string {
 }
 
 func pascalCase(s string) string {
-	parts := []string{}
+	parts := []string {}
 	for _, x := range strings.Split(s, "_") {
 		parts = append(parts, capitalize(x))
 	}
@@ -459,7 +459,12 @@ func pascalCase(s string) string {
 
 func packageFileName(path string) string {
 	ext := filepath.Ext(path)
-	return pascalCase(strings.TrimSuffix(path, ext))
+   pathWithoutExt := strings.TrimSuffix(path, ext)
+   parts := []string {}
+   for _, x := range strings.Split(pathWithoutExt, "/") {
+      parts = append(parts, pascalCase(x))
+   }
+   return strings.Join(parts, ".")
 }
 
 func packageType(path string) string {
