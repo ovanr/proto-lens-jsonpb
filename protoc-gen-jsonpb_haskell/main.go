@@ -37,7 +37,7 @@ func (g *generator) Generate() *plugin.CodeGeneratorResponse {
 	resp := new(plugin.CodeGeneratorResponse)
 
 	for _, f := range g.protoFilesToGenerate() {
-		jsonpbFileName := "Proto/" + packageFileName(filePath(f)) + "_JSON.hs"
+		jsonpbFileName := "Proto/" + fileNameNoExt(filePath(f)) + "_JSON.hs"
 
 		haskellCode := g.generateHaskellCode(f)
 		respFile := &plugin.CodeGeneratorResponse_File{
@@ -56,7 +56,7 @@ func (g *generator) generateHaskellCode(file *descriptor.FileDescriptorProto) st
 	print(b, "{-# LANGUAGE OverloadedStrings #-}")
 	print(b, "{-# OPTIONS_GHC -Wno-orphans -Wno-unused-imports -Wno-missing-export-lists #-}")
 
-	moduleName := packageFileName(filePath(file))
+	moduleName := haskellModuleName(filePath(file))
 	print(b, "module Proto.%s_JSON where", moduleName)
 	print(b, "")
 
@@ -74,7 +74,7 @@ func (g *generator) generateHaskellCode(file *descriptor.FileDescriptorProto) st
 	print(b, "")
 
   for _, dep := range file.Dependency {
-      print(b, "import           Proto.%s_JSON ()", packageFileName(dep))
+      print(b, "import           Proto.%s_JSON ()", haskellModuleName(dep))
   }
 
 	print(b, "import           Proto.%s as P", moduleName)
@@ -457,14 +457,22 @@ func pascalCase(s string) string {
 	return strings.Join(parts, "")
 }
 
-func packageFileName(path string) string {
+func fileNameParts(path string) []string {
 	ext := filepath.Ext(path)
    pathWithoutExt := strings.TrimSuffix(path, ext)
    parts := []string {}
    for _, x := range strings.Split(pathWithoutExt, "/") {
       parts = append(parts, pascalCase(x))
    }
-   return strings.Join(parts, ".")
+   return parts
+}
+
+func haskellModuleName(path string) string {
+   return strings.Join(fileNameParts(path), ".")
+}
+
+func fileNameNoExt(path string) string {
+   return strings.Join(fileNameParts(path), "/")
 }
 
 func packageType(path string) string {
